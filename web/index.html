@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Model Compare</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">LLM API Lab</p>
+            <h1>Model Compare</h1>
+          </div>
+          <button id="runButton" class="primary" type="button">
+            <span class="button-icon">&gt;</span>
+            Compare
+          </button>
+        </header>
+
+        <section class="composer" aria-label="Prompt controls">
+          <label class="field field-wide">
+            <span>Prompt</span>
+            <textarea id="prompt" rows="7">Explain the difference between temperature and top_p in one practical sentence.</textarea>
+          </label>
+
+          <label class="field field-wide">
+            <span>System Prompt</span>
+            <textarea id="systemPrompt" rows="3">You are a concise teaching assistant for an AI API workshop.</textarea>
+          </label>
+
+          <div class="control-grid">
+            <label class="field">
+              <span>Model A</span>
+              <input id="modelA" type="text" />
+            </label>
+            <label class="field">
+              <span>Model B</span>
+              <input id="modelB" type="text" />
+            </label>
+            <label class="field">
+              <span>Temperature <output id="temperatureValue">0.7</output></span>
+              <input id="temperature" type="range" min="0" max="2" value="0.7" step="0.1" />
+            </label>
+            <label class="field">
+              <span>Top-p <output id="topPValue">0.9</output></span>
+              <input id="topP" type="range" min="0" max="1" value="0.9" step="0.05" />
+            </label>
+            <label class="field">
+              <span>Max Tokens</span>
+              <input id="maxTokens" type="number" min="1" max="4096" value="256" step="32" />
+            </label>
+          </div>
+        </section>
+
+        <section class="summary" aria-label="Dashboard">
+          <div class="metric">
+            <span>Cheaper</span>
+            <strong id="cheaper">-</strong>
+          </div>
+          <div class="metric">
+            <span>Faster</span>
+            <strong id="faster">-</strong>
+          </div>
+          <div class="metric">
+            <span>Total Cost</span>
+            <strong id="totalCost">$0.000000</strong>
+          </div>
+          <div class="metric">
+            <span>Total Tokens</span>
+            <strong id="totalTokens">0</strong>
+          </div>
+        </section>
+
+        <section class="results" aria-label="Model output comparison">
+          <article class="result-card" id="cardA">
+            <div class="result-head">
+              <h2 id="titleA">Model A</h2>
+              <span class="pill" id="badgeA">Idle</span>
+            </div>
+            <div class="stats">
+              <span><b id="latencyA">0.00s</b> latency</span>
+              <span><b id="tokensA">0</b> tokens</span>
+              <span><b id="costA">$0.000000</b> cost</span>
+            </div>
+            <pre id="answerA">Run a comparison to see the first response.</pre>
+          </article>
+
+          <article class="result-card" id="cardB">
+            <div class="result-head">
+              <h2 id="titleB">Model B</h2>
+              <span class="pill" id="badgeB">Idle</span>
+            </div>
+            <div class="stats">
+              <span><b id="latencyB">0.00s</b> latency</span>
+              <span><b id="tokensB">0</b> tokens</span>
+              <span><b id="costB">$0.000000</b> cost</span>
+            </div>
+            <pre id="answerB">Run a comparison to see the second response.</pre>
+          </article>
+        </section>
+
+        <p id="status" class="status" role="status"></p>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

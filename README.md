@@ -117,6 +117,20 @@ Tất cả kiểm thử dùng `unittest.mock` — **không cần API key thật*
 
 ---
 
+## Chạy Web UI
+
+CLI trong `template.py` là phần logic/backend nhỏ: nó gọi API, đo latency, đếm token
+và ước tính chi phí. Web UI trong `web_app.py` chỉ bọc phần logic đó bằng một trang
+local để bạn chỉnh prompt, `top_p`, `temperature`, `max_tokens` và so sánh 2 model.
+
+```powershell
+python web_app.py
+```
+
+Mở URL được in ra terminal, thường là `http://127.0.0.1:8000`.
+
+---
+
 ## Chấm Điểm Tự Động (100 điểm)
 
 ```bash

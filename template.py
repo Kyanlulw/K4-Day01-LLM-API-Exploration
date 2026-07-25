@@ -13,6 +13,7 @@ Hướng dẫn:
 """
 
 import os
+from pydoc import plain
 import time
 from tracemalloc import start
 from typing import Any, Callable
@@ -38,6 +39,17 @@ PRICING_PER_1K_TOKENS = {
 # trong LAB_GUIDE.md) — tên model đổi qua .env. NVIDIA NIM: Phụ lục C.
 OPENAI_MODEL = os.getenv("LAB_MODEL", "gemini-2.5-flash")
 OPENAI_MINI_MODEL = os.getenv("LAB_MINI_MODEL", "gemini-2.5-flash-lite")
+
+
+def make_openai_client():
+    """Create an OpenAI-compatible client, honoring optional custom base URLs."""
+    from openai import OpenAI
+
+    kwargs = {"api_key": os.getenv("OPENAI_API_KEY")}
+    base_url = os.getenv("OPENAI_BASE_URL")
+    if base_url:
+        kwargs["base_url"] = base_url
+    return OpenAI(**kwargs)
 
 
 # ===========================================================================
@@ -74,20 +86,22 @@ def call_openai(
     """
     # TODO: import OpenAI, tạo client, gọi chat.completions.create,
     #       đo start/end time, trả về (response_text, latency)
-    from openai import OpenAI
-
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = make_openai_client()
     start = time.perf_counter()
     response = client.chat.completions.create(
         model=model, # Specify the model name
         messages=[
-            {'role': 'user', 'content': 'Hello world.'}
-        ], stream = False,
+            {'role': 'user', 'content': prompt}
+        ],
+        temperature=temperature,
+        top_p=top_p,
+        max_tokens=max_tokens,
+        stream = False,
     )
     latency = max(time.perf_counter() - start, 1e-9)
+    print (response.choices[0].message.content)
     return response.choices[0].message.content, latency
     
-    # print(response.choices[0].message.content)
     # raise NotImplementedError("Implement call_openai")
 
 
@@ -144,16 +158,21 @@ def compare_models(prompt: str) -> dict:
 
     gpt4o_answer , gpt4o_time = call_openai(prompt)
     mini_answer, mini_time = call_openai_mini(prompt)
-    pricing = PRICING_PER_1K_TOKENS.get(
+    pricing_4o = PRICING_PER_1K_TOKENS.get(
                     OPENAI_MODEL, PRICING_PER_1K_TOKENS["gemini-2.5-flash"]
-                )
-    cost = (len(gpt4o_answer.split()) / 0.75) / 1000 * pricing["output"]
+    )
+    cost_4o = (len(gpt4o_answer.split()) / 0.75) / 1000 * pricing_4o["output"]
+    pricing_4o_mini = PRICING_PER_1K_TOKENS.get(
+                    OPENAI_MINI_MODEL, PRICING_PER_1K_TOKENS["gemini-2.5-flash-lite"]
+    )
+    cost_4o_mini = (len(mini_answer.split()) / 0.75) / 1000 * pricing_4o_mini["output"]
     return {
         "gpt4o_answer": gpt4o_answer,
         "mini_answer": mini_answer,
         "gpt4o_time": gpt4o_time,
         "mini_time": mini_time,
-        "gpt4o_cost": cost  # TODO: Tính toán chi phí cho GPT-4o  
+        "gpt4o_cost": cost_4o,  # TODO: Tính toán chi phí cho GPT-4o
+        "mini_cost": cost_4o_mini  
     }
 
     raise NotImplementedError("Implement compare_models")
@@ -192,9 +211,8 @@ def chat_with_system_prompt(
         ]
     """
     # TODO: giống call_openai nhưng messages có thêm phần tử role="system"
-    from openai import OpenAI
     start = time.perf_counter()
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = make_openai_client()
     response = client.chat.completions.create(
             model=model, # Specify the model name
             messages=[
@@ -311,8 +329,7 @@ def streaming_chatbot() -> None:
         - Cắt history còn 4 lượt cuối (8 message): history = history[-8:]
     """
     # TODO: vòng lặp while, đọc input, stream phản hồi, duy trì history
-    from openai import OpenAI
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = make_openai_client()
     history : list(dict[str, str]) = []
     while True:
         user_msg = input("User: ")
@@ -427,12 +444,10 @@ def run_assistant(
         return {"turns": turns, "tokens_used": tokens_used,
                 "total_cost": total_cost, "history": history}
     """
-    from openai import OpenAI
-
     if get_input is None:
         get_input = input
 
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    client = make_openai_client()
     history: list[dict[str, str]] = []
     turns = 0
     tokens_used = 0
@@ -453,7 +468,7 @@ def run_assistant(
         )
         stream = retry_with_backoff(
             lambda: client.chat.completions.create(
-                model=OPENAI_MODEL,
+                model=OPENAI_MINI_MODEL,
                 messages=messages,
                 stream=True,
             )
